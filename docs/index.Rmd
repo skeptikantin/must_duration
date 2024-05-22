@@ -2,18 +2,234 @@
 title: "Duration of *must* in spoken American English"
 author: "Susanne Flach"
 date: "`r Sys.Date()`"
-output: html_document
+output: 
+  html_document:
+    theme: cosmo
+    code_folding: hide
+    toc: yes
+    toc_float:
+      collapsed: true
+editor_options: 
+  chunk_output_type: console
+  markdown: 
+    wrap: 72
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, fig.width = 6, fig.height = 4)
 ```
 
 ## Background
 
+While I normally work with text-level data in grammar and lexis, this
+was one very interesting excursion into the analysis of spoken data.
 
-```{r cars}
-summary(cars)
+### The two meanings of *must*
+
+English *must* has two meanings: the deontic meaning expresses that
+something has to be done (*We <u>must</u> be vigilant*) and the
+epistemic meaning refers to something that is probably the case (*He
+<u>must</u> be home; his car is in the driveway*).[^1]
+
+[^1]: Some authors call 'deontic' the 'root' meaning.
+
+We know from previous research on large amounts of text has shown that the two meanings occur in very distinct lexical and syntactic environments. For example,
+if followed by a perfect (*That must <u>have been</u> difficult*), the
+meaning is nearly always epistemic, whereas if followed by a main verb
+(*We must <u>clean</u> up this mess*), the meaning is usually deontic.
+So lexical and syntactic environment are very reliable cues to which
+meaning of *must* is intended.
+
+### The question
+
+**In this project, I was interested in whether the two meanings also
+differ in articulatory duration.** Many words that sound the same, but
+differ in meaning (e.g., *time* and *thyme*), or even verb and noun uses
+of the same word (*the snow* vs. *to snow*), differ in duration. Such
+differences are very often due to frequency of occurrence: more
+frequently used words are more quickly retrieved and thus spoken more
+quickly. In the case of *must*, any durational difference is probably
+not (solely) due to frequency, as both are roughly equally frequent in
+spoken English.
+
+As there was little research to go by in terms of hypotheses, I was
+mainly interested in exploratory analysis: do the two meanings differ in
+duration? If so, by how much? Are there more general differences between
+the two meanings?
+
+## The data
+
+The data is from US Network television (CNN, ABC, Fox News, etc.), made
+available for NLP research in linguistics and multimodal communication.
+The closed-captions of TV shows were force-aligned with the audio, which
+allowed for some (rather crude) measure of word duration.
+
+The data points in the analysis were hand-picked. If you are interested
+in more detailed information on the data and on the (lengthy) process of
+how it was processed, see the [Appendix](#appendix).
+
+### Variables
+
+```{r prelims}
+# load libraries
+source("../assets/my_ggplot_themes.R")
+source("../assets/suz_theme.R")
+library(tidyverse)
+library(knitr)
+library(extrafont)
+library(see)
+library(beeswarm)
+library(ggstatsplot)
+loadfonts(device = "postscript")
+theme_set(theme_source_sans())
+
+# set colors
+PB = c(rgb(0, 102, 204, maxColorValue=255))
+PG = c(rgb(153, 204, 0, maxColorValue=255))
+
+
+# load data
+must <- read_csv("https://raw.githubusercontent.com/skeptikantin/must_duration/main/data/must.csv")
+
+# inspect the data structure
+must |> 
+  select(L1, Match, R1, Meaning, Emphasis, CS, SR, TP.before, TP.after, T.Freq) |> 
+  # random selection of 10 lines:
+  sample_n(10) |> 
+  kable(digits = 3, caption = "Must data: outcome(s) and predictors")
 ```
 
-## Including Plots
+The first columns include meta data such as corpus position
+(**CPOS**, unique), left and right context of five tokens
+(**Left**/**Right**) and one token (**L1**/**R1**).
+
+The binary categorical variables **Meaning** (deontic, epistemic) and
+**Emphasis** (yes, no) were hand-annotated while the datapoints were
+checked against the actual videos. **Emphasis** expresses whether the
+use of *must* occurs in an expression that is particularly emphasized
+(which will naturally effect its duration).
+
+The numerical variables include the (main) outcome, duration, in **CS**
+(centiseconds, non-transformed)
+
+Manually annotated: **Meaning**: deontic or epistemic **Gender**: male
+or female (annotator's judgement) **CS**: duration of *must* in
+centiseconds (1/100th of a second) **Duration**: log-transformed CS
+**SR**: speech rate (in syllables/seconds), based on 200
+
+## Exploratory data analysis
+
+### Descriptive statistics
+
+Overall, deontic *must* is substantially shorter than epistemic *must*, by raw numbers that is a difference of almost 50ms; epistemic *must* is also a bit less variable. This is a statistically 
+
+```{r class.source = "fold-show"}
+must |> 
+  group_by(Meaning) |> 
+  summarise(mean = mean(CS), sd = sd(CS))
+```
+
+```{r}
+theme_set(theme_source_sans())
+
+
+ggplot(must, aes(Meaning, CS * 1000, fill = Meaning)) +
+  geom_violin(color = NA) +
+  geom_boxplot(width = .2, fill = "grey90", notch = TRUE) +
+  labs(
+    title = "Duration by meaning",
+    subtitle = "Deontic *must* is substantially shorter than epistemic *must*",
+    y = "Duration (ms)", x = NULL
+    ) +
+  scale_fill_manual(values = c(PB, PG)) +
+  theme(
+    legend.position = "none",
+    )
+
+```
+
+### Multifactorial: correlations
+
+Of course the duration of a word depends on a variety of factors. First, if a word occurs in a context of rapid speed in general, then *must* will also be spoken faster. We measured "speech rate" as number of syllables per second in the context 200 words to the left and right of the occurrence:
+
+```{r}
+ggplot(must,
+       aes(SR, CS * 1000)) +
+  geom_jitter(size = 2, alpha = 0.8, color = PB) +
+  geom_smooth(se = FALSE, color = PG) +
+  labs(title = "Duration by speech rate and emphasis",
+       subtitle = "Faster speech leads to shorter *must* duration",
+       x = "Speech rate (syllables/seconds)",
+       y = "Duratiaon (ms)") +
+  scale_color_manual(values = c(PB, PG))
+```
+
+```{r}
+ggplot(must, aes(Meaning, CS * 1000, fill = Emphasis)) +
+  geom_violinhalf(
+    data = must |> filter(Emphasis == "yes"),
+    color = NA
+    ) +
+  geom_violinhalf(
+    data = must |> filter(Emphasis == "no"),
+    color = NA,
+    flip = TRUE) +
+  labs(
+    title = "Duration by meaning and emphasis",
+    subtitle = "Emphasis leads to longer duration",
+    y = "Duration (ms)", x = NULL
+    ) +
+  scale_fill_manual(values = c(PB, PG)) +
+  theme(
+  )
+```
+
+
+
+## Appendix {#appendix}
+
+I extracted the data from the NewsScape 2016 corpus, a collection of
+video transcripts from US Network television from the year 2016, which
+totals about 250 million words of running text. The programs are mostly
+from the ABC, CNN, or Fox. Closed-captions, which are obligatory in the
+US, are force-aligned with the video, and word duration is automatically
+extracted; if you are familiar with NLP or corpus linguistics, then
+think about word duration as a token-level annotation that is available
+in NewsScape2016, alongside traditional annotation layers like
+part-of-speech or lemma. The word duration annotation specifies where in
+the audio-video the word begins and where it ends, and we took,
+trivially, the difference between the two. ([See the RedHenLab for more
+info.](https://www.redhenlab.org/home))
+
+### Cleaning & sampling
+
+I extracted 20,000 uses of *must*, and semi-automatically removed all
+instances that are likely "unusable data" (e.g., misaligned text/audio,
+missing time stamps, etc.), or for which important metrics would not be
+available (more on this later). From the remaining data I randomly
+selected 2,000 examples, which I manually checked against the actual
+video snippets, and removed dirty data that:
+
+<li>Pauses of more than 500ms before and after *must*</li>
+
+<li>Where no speech rate could be determined, i.e., no 200 usable tokens
+left and right</li>
+
+While **Meaning** was rather straight-forward, `Emphasis` was trickier:
+emphasis is clearly a non-binary property, especially as a property that
+affects word duration. The choice for a
+
+Emphasis was coded by myself and a collaborator, who was unaware of the
+goal of the project until after annotation; the data contains his
+annotations only.
+
+### Variables
+
+```{r echo = FALSE, results = 'asis'}
+library(knitr)
+must |> 
+  select(-c(CPOS, Left, Match, Right, L1, R1)) |> 
+  # random selection of 10 lines:
+  sample_n(10) |> 
+  kable(caption = "Must data: outcome(s) and predictors")
+```
