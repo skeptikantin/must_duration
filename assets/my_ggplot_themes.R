@@ -45,10 +45,10 @@
 theme_source_sans <- function(base_size = 11,
                               strip_text_size = 12,
                               strip_text_margin = 5,
-                              subtitle_size = 13,
+                              subtitle_size = 10,
                               subtitle_margin = 10,
-                              plot_title_size = 15,
-                              plot_title_margin = 10,
+                              plot_title_size = 12,
+                              plot_title_margin = 8,
                               ...) {
   ret <- ggplot2::theme_light(base_family = "Source Sans Pro",
                               base_size = base_size, ...)
@@ -72,11 +72,11 @@ theme_source_sans <- function(base_size = 11,
   ret$title <- ggtext::element_markdown()
   
   ret$axis.text <- ggplot2::element_text(
-    size = 12
+    size = 10
   )
   
   ret$axis.title <- ggplot2::element_text(
-    size = 13
+    size = 10
   )
   
   ret
