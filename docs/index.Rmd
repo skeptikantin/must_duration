@@ -21,41 +21,54 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, fig.width = 6, fig.height = 
 
 ## Background
 
-This project was an interesting excursion into the analysis of spoken data, that came about almost by accident: **do the two meanings of English *must* differ in their duration and other phonetic properties?** Duration of this kind had not been studied at all, probably due to lack of data, but differences wouldn't be surprising, as research has shown that homophones like *time* and *thyme* differ in duration (usually it's the more frequent and/or more 'basic' meaning that is shorter).[^1]
+This analysis of spoken data came about almost by accident: at the time, we were working on English modal auxiliaries, trying to figure out what makes people distinguish between verbs of similar meaning such as *must* or *have to*. As a side project, I was also exploring a new data source that provided word duration information.
+
+So I put the two together: do the two meanings of English *must*, which differ by their lexical and syntactic environment, also **differ in phonetic properties, and if so, can we measure it, and if so still, would that help people distinguishing the two?**
+
+(tl;dr, I found answers to the first two questions as described below, but the third question turned out too difficult to measure given the priorities of the projects I have been working on since.)
+
+These properties hadn't been studied for modals so far at all, probably due to lack of data. Differences wouldn't be surprising — homophones like *time* and *thyme* or verb vs. noun uses like *to snow* & *the snow* differ in duration. Usually it's the more frequent and/or more 'basic' meaning that is shorter.[^1]
 
 [^1]: Gahl, Susanne. 2008. Time and thyme are not homophones: The effect of lemma frequency on word durations in spontaneous speech. Language 84(3). 474–496. https://doi.org/10.1353/lan.0.0035. Lohmann, Arne. 2018. Time and thyme are NOT homophones: A closer look at Gahl’s work on the lemma-frequency effect, including a reanalysis. Language 94(2). e180–e190. https://doi.org/10.1353/lan.2018.0032 
 
-For this kind of analysis, we need a fairly large corpus, which comes with the trade-off that the word duration determination is coarse-grained and the audio quality is low (by traditional standards in phonetics). But the NewsScape corpus is a pretty interesting resource for many corpus-linguistics tasks. ([See the RedHenLab for more info.](https://www.redhenlab.org/home))
-
 ### The two meanings of *must*
 
-English *must* has two meanings: the deontic meaning refers to what has to be done (*We <u>must</u> be vigilant*) while the epistemic meaning refers to a situation that is probably the case (*He <u>must</u> be home; his car is in the driveway*).[^2]
+The basics: English *must* has two meanings:
 
-[^2]: Some authors call 'deontic' the 'root' meaning.
+1. **Deontic**: what has to be done (*We <u>must</u> be vigilant*)
+2. **Epistemic**: a situation that is probably the case (*He <u>must</u> be home; his car is in the driveway*).
 
-The two meanings occur in very distinct lexico-grammatical environments. For example, if followed by a perfect (*That must <u>have been</u> difficult*), the meaning is nearly always epistemic, whereas if followed by a main verb (*We must <u>clean</u> up this mess*), the meaning is usually deontic. So the linguistic environment is a very reliable cue to the meaning of *must*, and because of the greater likelihood of co-occurrence, will also contribute to acoustic shorting.
+The two meanings occur in relatively distinct lexico-grammatical environments. For example, if followed by a perfect (*That must <u>have been</u> difficult*), the meaning is nearly always epistemic, whereas if followed by a main verb (*We must <u>clean</u> up this mess*), the meaning is usually deontic. As linguistic environments are very reliable cues to the meaning, we must control for frequency of occurrence with adjacent words in the analysis to avoid attributing effects to meaning that are in fact just due to greater likelihood of co-occurrence.
 
 ### The question(s)
 
-**In this project, I was interested in whether the two meanings also differ in duration, which has theoretical implications for word storage, but potentially also for lexical change in grammar.** In general, durational differences are due to
+**In this project, I was interested in whether the two meanings also differ in duration, which has theoretical implications for word storage, but potentially also for lexical change in grammar.**
+
+In general, duration differences are due to:
 
 * Frequency of use in general
-* Frequency of co-occurrence with surrounding words (e.g., transitional probabilities)
-* Emphasis: putting emphasis on words will likely lead to longer duration
-* Speech rate: if the conversation is fast-paced, words will be shorter
+* Frequency of co-occurrence with surrounding words
+* Emphasis: putting emphasis on words will lead to longer duration
+* Speech rate: if the conversation is fast-paced, words will of course be spoken more quickly
 
-The frequency-related properties are related to expectation: words that co-occur often, will be more easily retrieved from memory. Conversely, if a word is more unexpected, more effort will probably go into its articulation. In cases such as *time* or *thyme* and *but* and *butt* there is a noticeable frequency difference by orders of magnitude. No such difference exists between the two meanings of *must*, which are equally frequent. Differences in frequency are due to corpus composition -- deontic *must* is more frequent in formal speech situations, while epistemic *must* is rather characteristic of informal and/or spoken-like discourse. In any case, their frequency differences are usually on the same order of magnitude.
+Frequency properties are due to expectation and ease of articulation: words that are more common or often co-occur with neighbouring words are more easily retrieved from memory. Hence, less effort is required in their articulation. This has been shown for cases such as *time* vs. *thyme* or *but* vs. *butt*, where the former are vastly more common than the latter.
 
-As there was little research to go by in terms of hypotheses, I was
-mainly interested in exploratory analysis: do the two meanings differ in
-duration? If so, by how much? Are there more general differences between
-the two meanings?
+However, the two meanings of *must* are roughly equally frequent. We measure frequency as number of times they occur in large texts collections (corpora). Differences in *must* frequency depend on the composition of the data base: deontic *must* is more likely in formal situations, while epistemic *must* is characteristic of informal and/or spoken-like discourse. In any case, their frequency differences are on the same order of magnitude where frequency effects are probably negligible.
+
+As there was little research to go by in terms of hypotheses, I was mainly interested in an exploratory analysis:
+
+* Do the two meanings differ in duration? If so, by how much?
+* Are there more general phoentic differences between the two meanings?
 
 ## The data
 
-The [NewsScape2016](https://multimodalcorpora.org/web/) corpus houses corpus-linguistically (NLP) processed data from US Network television. The closed-captions were force-aligned with the audio to produce annotations of beginnings of ends of words, from which the words' duration in centiseconds could be determined. 
+For this kind of analysis, we need a fairly large database (called 'corpus'). This comes with the trade-off that measuring word duration must be automatic and is thus coarse-grained; also the audio quality of large data sets can be very low by traditional standards in phonetics.
 
-The data can be extracted via a cql-based query common in corpus linguistics. The data points used in the analysis were semi-manually picked from a list of 20,000 uses of *must*. I then manually checked about 2,000 examples against the original video using [RapidAnnotator](https://www.rapidannotator.org/), in order to remove unusable data (erroneous force-alignment, transcription, music, etc.) and to annotate meaning and emphasis. See [Appendix](#appendix).
+Nevertheless, the NewsScape corpus is a very interesting resource for many corpus-linguistics tasks. ([See the RedHenLab for more info.](https://www.redhenlab.org/home)) The [NewsScape2016](https://multimodalcorpora.org/web/) corpus houses corpus-linguistically processed data from US Network television. Closed captions were force-aligned with the audio - this returns annotations of the beginning and end of words, from which the words' duration in centiseconds could be determined.
+
+The data can be extracted via a CQL-based query that is common in corpus linguistics. I picked my data points for this analysis semi-manually from a list of 20,000 uses of *must* in NewsScape2016. The exact procedure and code will be provided at a later point, but basically I excluded tokens if they have substantial pauses before or after *must* or when no speech rate could be determined due to missing context or failed forced-alignment.
+
+I then manually checked ~2,000 examples against their original video using [RapidAnnotator](https://www.rapidannotator.org/). This served two purposes: (a) I removed unusable data such as erroneous force-alignment, transcription, or music, and (b) a colleague and myself annotated the *must* meaning and whether the use carried particular emphasis. In a final step, I also calculated speechrate (using {nsyllable}) and transitional probabilities.
 
 ### Data preparation
 
@@ -67,7 +80,7 @@ library(extrafont)
 library(see)
 library(beeswarm)
 library(ggstatsplot)
-loadfonts(device = "postscript")
+#loadfonts(device = "postscript")
 theme_set(suzR::theme_suzR())
 
 # set colors
@@ -77,62 +90,60 @@ PG = c(rgb(153, 204, 0, maxColorValue=255))
 
 ### Variables
 
-The following shows 10 random examples of data points to illustrate the data structure; a more complete description of the variables is in the Appendix.
-
-tp.before measures the forward transitional probability: for example, *administration* and *must* co-occur 112 times, and since *must* occurs 181378 times, the probability that *must* follows *administration* is 112/181378 = 0.000617495. Conversely, the probability that *do* follows *must*
+The snippet shows 10 random examples of data points to illustrate the data structure:
 
 ```{r data}
 # load data
-must <- read_csv("https://raw.githubusercontent.com/skeptikantin/must_duration/main/data/must.csv")
+must <- readr::read_csv("https://raw.githubusercontent.com/skeptikantin/must_duration/main/data/must.csv")
 
 ## anc: undo the transformations
-head(must)
-
-must |> 
-  mutate(TP.before = exp(TP.before),
-         TP.after = exp(TP.after))
+#head(must)
 
 # inspect the data structure
 set.seed(12345)
 must |> 
-  select(L1, Match, R1, Meaning, Emphasis, CS, SR, TP.before, TP.after, T.Freq) |> 
+  arrange(cpos) |> 
+  select(l1, match, r1, meaning, emphasis, dur, sr, m_r1_tp_fw, m_r1_bgrm_frq) |> 
+  # rename
+  rename(duration = dur, speechrate = sr, trans_prop = m_r1_tp_fw, bgrm_freq = m_r1_bgrm_frq) |> 
   # random selection of 10 lines:
   sample_n(10) |> 
   kable(digits = 3, caption = "Must data: outcome(s) and predictors")
 ```
 
-The first columns include the match (*must*) and one word to its left and right. **Meaning** indicates whether it's epistemic or deontic. **Emphasis** is a binary variable that indicates if the *must* use occured in a context of particular stress or emphasis. **CS** is the duration of *must* in 1/100th of a second (**c**enti**s**econds). S
+A brief description of the most important variables:
 
-The binary categorical variables **Meaning** (deontic, epistemic) and **Emphasis** (yes, no) were hand-annotated while the datapoints were checked against the actual videos. **Emphasis** expresses whether the use of *must* occurs in an expression that is particularly emphasized (which will naturally effect its duration).
+* `l1`, `match` and `r1`: *must* and the words to its left and right.
+* `meaning`: indicate whether the use is epistemic or deontic.
+* `emphasis` indicates if the *must* use occurred in a context of particular stress or emphasis.
+* `duration` of *must* in 1/100th of a second (**c**enti**s**econds).
+* `speechrate`: average number of syllables per second spoken 20 words before and 20 words after (a higher number points a more fast-paced speech situation.
+* `trans_prob`: the transitional probability between *must* and the following word.
 
-The numerical variables include the (main) outcome, duration, in **CS** (centiseconds, non-transformed)
+Transitional probability is a bit complicated, but basically: if a word follows *must* very often, the probability is high that speakers (and hearers) expect that word with a higher probability after they say (or hear) *must*. For example, *must* and *be* occur a lot together, hence, the transitional probability is very high (0.28). Or, in other words, 28% of *must* uses are followed by *be*.
 
-Manually annotated: **Meaning**: deontic or epistemic **Gender**: male
-or female (annotator's judgement) **CS**: duration of *must* in
-centiseconds (1/100th of a second) **Duration**: log-transformed CS
-**SR**: speech rate (in syllables/seconds), based on 200
+*Transitional probability is `NA` where the word combination of *must *and the second word does not occur in the data base over which transitional probability was caluclated, which in this case was the Corpus of Contemporary American English.*
 
 ## Exploratory data analysis
 
-### Descriptive statistics
+### Duration & meaning
 
-Overall, deontic *must* is substantially shorter than epistemic *must*, by raw numbers that is a difference of almost 50ms; epistemic *must* is also a bit less variable. This is a statistically 
+Overall, deontic *must* is substantially shorter than epistemic *must*, by raw numbers that is a difference of almost 50ms. Epistemic *must* is also a bit less variable (lower standard deviation).
 
 ```{r class.source = "fold-show"}
 must |> 
-  group_by(Meaning) |> 
-  summarise(mean = mean(CS), sd = sd(CS))
+  group_by(meaning) |> 
+  summarise(mean = mean(dur), sd = sd(dur))
 ```
 
+This graph illustrates this result:
+
 ```{r}
-#theme_set(theme_source_sans())
-
-
-ggplot(must, aes(Meaning, CS * 1000, fill = Meaning)) +
+ggplot(must, aes(meaning, dur * 1000, fill = meaning)) +
   geom_violin(color = NA) +
   geom_boxplot(width = .2, fill = "grey90", notch = TRUE) +
   labs(
-    title = "Duration by meaning",
+    title = "Duration of *must* by meaning:",
     subtitle = "Deontic *must* is substantially shorter than epistemic *must*",
     y = "Duration (ms)", x = NULL
     ) +
@@ -140,35 +151,65 @@ ggplot(must, aes(Meaning, CS * 1000, fill = Meaning)) +
   theme(
     legend.position = "none",
     )
-
 ```
 
-### Multifactorial: correlations
+### Duration & speech rate
 
-Of course the duration of a word depends on a variety of factors. First, if a word occurs in a context of rapid speed in general, then *must* will also be spoken faster. We measured "speech rate" as number of syllables per second in the context 200 words to the left and right of the occurrence:
+Of course the duration of a word heavily depends on a variety of factors. First and most obviously, if a word occurs in a context of rapid speed, then *must* will also be spoken faster. Recall that we measured "speech rate" as number of syllables per second in the context span of 20 words to the left and right of *must*.
+
+The effect can be clearly seen in this graph:
 
 ```{r}
 ggplot(must,
-       aes(SR, CS * 1000)) +
-  geom_jitter(size = 2, alpha = 0.8, color = PB) +
+       aes(sr, dur * 1000)) +
+  geom_jitter(size = 2, alpha = 0.2, color = PB) +
   geom_smooth(se = FALSE, color = PG) +
-  labs(title = "Duration by speech rate and emphasis",
-       subtitle = "Faster speech leads to shorter *must* duration",
+  labs(title = "Duration by speech rate",
+       subtitle = "Faster speech is associated with shorter *must* duration",
        x = "Speech rate (syllables/seconds)",
-       y = "Duratiaon (ms)") +
+       y = "Duration (ms)") +
   scale_color_manual(values = c(PB, PG))
 ```
 
+### Duration & emphasis
+
+Word duration can also be affected by whether a word is particularly emphasized - if you put emphasis in your speech, it'll likely become more careful and thus of longer duration.
+
+The descriptive statistic here shows that deontic *must* is not only more frequent, but also relatively more often with particular emphasis. Both properties, especially the frequency of occurrence, are *likely* due to the nature of the source data: the data is from US network television, which is more formal. 
+
 ```{r}
-ggplot(must, aes(Meaning, CS * 1000, fill = Emphasis)) +
+must_tab <- must |> 
+  group_by(emphasis, meaning) |> 
+  count() |> 
+  # get percentages
+  group_by(meaning) |> 
+  mutate(perc = n / sum(n))
+  
+ggplot(must_tab, aes(meaning, n, group = emphasis, fill = emphasis, label = perc)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label=sprintf("%1.1f%%", perc*100)), size = 3, position = position_stack(vjust = 0.5), color = "white", family = "Goldman Sans Condensed") + 
+  labs(
+    title = "Meaning and emphasis",
+    subtitle = "Deontic *must* more frequent and proportionally more often emphasized",
+    y = "Occurrences", x = NULL
+    ) +
+  scale_fill_manual(values = c(PB, PG))
+```
+
+
+The effect of emphasis on duration can clearly be seen in this violin plot: *must* uses which are emphasized (green) are overall longer than those who are not (blue). This holds for both *deotic* and *epistemic* uses:
+
+```{r}
+ggplot(must, aes(meaning, dur * 1000, fill = emphasis)) +
   geom_violinhalf(
-    data = must |> filter(Emphasis == "yes"),
+    data = must |> filter(emphasis == "yes"),
     color = NA
     ) +
   geom_violinhalf(
-    data = must |> filter(Emphasis == "no"),
+    data = must |> filter(emphasis == "no"),
     color = NA,
-    flip = TRUE) +
+    flip = TRUE
+    ) +
   labs(
     title = "Duration by meaning and emphasis",
     subtitle = "Emphasis leads to longer duration",
@@ -177,67 +218,79 @@ ggplot(must, aes(Meaning, CS * 1000, fill = Emphasis)) +
   scale_fill_manual(values = c(PB, PG))
 ```
 
+### Duration, meaning & speech rate
+
+The combination of these factors can also be visualized as follows:
+
+* deontic *must* (left) is generally longer that epistemic *must* (right) - dots cluster higher on the left
+* faster-paced contexts are characterized by shorter word duration: negative correlation left to right
+* emphasized uses (green) are generally longer than non-emphasized ones (blue)
+
 ```{r}
 ggplot(must,
-       aes(SR, CS * 1000, group = Emphasis, color = Emphasis)) +
-  geom_jitter(size = 2, alpha = 0.8) +
+       aes(sr, dur * 1000, group = emphasis, color = emphasis)) +
+  geom_jitter(size = 2, alpha = 0.3) +
   geom_smooth(se = FALSE) +
   labs(title = "Duration by speech rate and emphasis",
        subtitle = "Faster speech leads to shorter *must* duration",
        x = "Speech rate (syllables/seconds)",
-       y = "Duratiaon (ms)") +
+       y = "Duration (ms)") +
+  scale_color_manual(values = c(PB, PG)) +
+  facet_wrap(~meaning)
+
+```
+
+### ...and transitional probability?
+
+If the word that follows *must* occurs often in that position, we also see an effect - greater probability leads to short *must* duration:
+
+```{r}
+must |> 
+  # first filter the 'must + R1' combinations where no transitional probability exists:
+  filter(!is.na(m_r1_tp_fw)) |> 
+  ggplot(aes(log(m_r1_tp_fw), dur * 1000, group = emphasis, color = emphasis)) +
+  geom_jitter(size = 2, alpha = 0.3) +
+  geom_smooth(se = FALSE) +
+  labs(title = "Duration by transitional probability",
+       subtitle = "Greater expectation leads to shorter *must* duration",
+       x = "Transitional probability (log) between 'must' and the first word on the right",
+       y = "Duration (ms)") +
   scale_color_manual(values = c(PB, PG))
 
 ```
 
+## Regression model
 
-## Appendix {#appendix}
+In situations with multiple influencing factors, we can or should use a regression model to test whether the correlation between an outcome (here: duration) and a factor of interest (here: meaning) is independent of all the other variables that also show the same effect. In other words, we need to 'control' for the other factors before drawing conclusions.
 
-I extracted the data from the NewsScape 2016 corpus, a collection of
-video transcripts from US Network television from the year 2016, which
-totals about 250 million words of running text. The programs are mostly
-from the ABC, CNN, or Fox. Closed-captions, which are obligatory in the
-US, are force-aligned with the video, and word duration is automatically
-extracted; if you are familiar with NLP or corpus linguistics, then
-think about word duration as a token-level annotation that is available
-in NewsScape2016, alongside traditional annotation layers like
-part-of-speech or lemma. The word duration annotation specifies where in
-the audio-video the word begins and where it ends, and we took,
-trivially, the difference between the two. ([See the RedHenLab for more
-info.](https://www.redhenlab.org/home))
+We can fit a linear model. The picture is overall quite more complicated and the data a little stubborn (as is often the case with language data...), but for illustration purposes, it will suffice for now - and the overal conclusions remain valid even if we throw more robust statistical modelling at that data.
 
-### Cleaning & sampling
+```{r}
 
-I extracted 20,000 uses of *must*, and semi-automatically removed all
-instances that are likely "unusable data" (e.g., misaligned text/audio,
-missing time stamps, etc.), or for which important metrics would not be
-available (more on this later). From the remaining data I randomly
-selected 2,000 examples, which I manually checked against the actual
-video snippets, and removed dirty data that:
+must_lm <- must |> 
+  rename(duration = dur, speech_rate = sr, trans_prob = m_r1_tp_fw) |> 
+  select(duration, meaning, emphasis, speech_rate, trans_prob)
 
-<li>Pauses of more than 500ms before and after *must*</li>
+lm(log(duration) ~ meaning + speech_rate + emphasis + trans_prob, data = must_lm) |> 
+  #lm(log(dur) ~ meaning + sr + emphasis + log(m_r1_tp_fw), data = must) %>%
+  broom::tidy() %>%
+  kable(digits = 3, caption = "Outcome for predictors of simple linear predicting must duration")
 
-<li>Where no speech rate could be determined, i.e., no 200 usable tokens
-left and right</li>
-
-While **Meaning** was rather straight-forward, `Emphasis` was trickier:
-emphasis is clearly a non-binary property, especially as a property that
-affects word duration. The choice for a
-
-Emphasis was coded by myself and a collaborator, who was unaware of the
-goal of the project until after annotation; the data contains his
-annotations only.
-
-### Variables
-
-```{r echo = FALSE, results = 'asis'}
-library(knitr)
-must |> 
-  select(-c(CPOS, Left, Match, Right, L1, R1)) |> 
-  # random selection of 10 lines:
-  sample_n(10) |> 
-  kable(caption = "Must data: outcome(s) and predictors")
 ```
+
+We should be careful to read too much from the data, as mentioned above. But what we *can* read from the `estimate` column is that all predictors with a positive estimate, or "coefficient", lead to *longer* word duration (`emphasis`) and those with a negative coefficient lead to *shorter* word duration (`meaning` if epistemic, `speech_rate` and `trans_prob`).
+
+We must not read much into numerical differences between the estimates as the predictors are on different scales. We would need to transform the data accordingly, but we'll leave that for another day.
+
+## Conclusions
+
+Thus, from this model and the data we currently have, we can conclude that the different meanings of *must* indeed show substantial phonetic differences:
+
+* Deontic *must* is substantially longer
+* Deontic *must* is also subject to more emphasis (in this data)
+* Meaning is a significant factor for word duration
+
+I am no phonetician, but I have had chats to colleagues that the raw difference of about 50ms is *worlds*. From a word production perspective, this could point to speakers perceiving them as different lexical words. And, a working hypothesis going forward would be that hearers use that phonetic information when needing to find the correct meaning or when ambiguity arises.
 
 ## References
 Gahl, Susanne. 2008. *Time* and *thyme* are not homophones: The effect of lemma frequency on word durations in spontaneous speech, *Language* 84: 474-496. [10.1353/lan.0.0035](https://doi.org/10.1353/lan.0.0035)
